@@ -51,7 +51,7 @@ index = 1
 # .currentParticipantID$ = participantID$
 .currentParticipantID$ = ""
 
-###### Main loop starts here 
+###### 0. Main loop starts here 
 while index < 'last_row_plus_one'
 	# Advance to the next unchecked token. 
 	@find_current_row: index
@@ -60,6 +60,7 @@ while index < 'last_row_plus_one'
 	select Table MainDataFrame
 	.nextParticipantID$ = Get value: index, "ID"
 
+	# Load the audio file if need to do so, and load TextGrid (or start a new one) as appropriate. 
 	if .nextParticipantID$ <> .currentParticipantID$
 		# Setup for and initialization and first run-through of script.
 		if .currentParticipantID$ <> ""
@@ -77,7 +78,8 @@ while index < 'last_row_plus_one'
 			... .soundFile$
 	endif
 
-## Section below could be made into a procedure. 
+## Section below could be made into a procedure?
+	# Get the information you need to populate the tag placement GUI.  
 	select Table MainDataFrame
 	.word$ = Get value: index, "Word"
 	.trial_number$ = Get value: index, "TrialNumber"
@@ -92,10 +94,10 @@ while index < 'last_row_plus_one'
 	.endTime = Get value: index, "XMax"
 	.stimOnset$ = Get value: index, "stimOnset"
 
+	# Zoom to the current target production.  
 	@zoom: .stimulusTextGrid$, .startTime, .endTime
 
-## Need to make a procedure that can be invoked for both stimOnset and stimOffset
-## so that can handle cases where both are inserted by default. 
+	# 1. Beginning of section to take care of the stimulus onset tag. 
 	if .stimOnset$ <> "NA"
 		.stimOnset = '.stimOnset$'
 		editor: .stimulusTextGrid$
@@ -103,12 +105,8 @@ while index < 'last_row_plus_one'
 			Move cursor to nearest zero crossing
 			.stimOnset = Get cursor
 		endeditor
-
-		selectObject(.stimulusTextGrid$)
-		Insert point: stimulus_textgrid_tiers.splicepoints, '.stimOnset', "stimOnset"
-		Insert boundary: stimulus_textgrid_tiers.filenames, '.stimOnset'
-## Also need code to allow the checker to adjust the stimulus onset tag, if she's not happy 
-## with it. 
+		.onset_button = 3
+## Need code here to allow the checker to adjust the stimulus onset tag, if she's not happy with it. 
 	else
 		beginPause("Put boundary at stimulus beginning for: ")
 			comment("'.currentParticipantID$'  '.trial_number$' : '.word$' : repetition '.repetition' ")
@@ -119,87 +117,89 @@ while index < 'last_row_plus_one'
 			if .taggerNotes$ <> "NA"
 				comment("tagger noted: '.taggerNotes$'")
 			endif
-		.button = endPause: "Quit", "Skip", "Mark onset", 3
-		if .button == 1
+		.onset_button = endPause: "Quit", "Skip", "Mark onset", 3
+		if .onset_button == 1
 			select all
 			Remove
 			exit
-		elif .button == 2
+		elif .onset_button == 2
 			index = index + 1
-		elif .button == 3
+		else
 			editor: .stimulusTextGrid$
 				Move cursor to nearest zero crossing
 				.stimOnset = Get cursor
+			endeditor
+		endif
+	endif
+	# 1. End of section to take care of the stimOnset. 
+
+	# 2. Beginning of section to take care of stimOffset tag.
+	if .onset_button == 3
+		# If the user didn't choose Quit or Skip,  next deal with the stimOffset tag.
+		beginPause("Put boundary at stimulus offset for: ")
+			comment("'.currentParticipantID$'  '.trial_number$' : '.word$' : repetition '.repetition' ")
+			comment("tagged as '.consType$' , transcribed as '.transcription$'")
+			if .segmNotes$ <> "NA"
+				comment("segmenter noted: '.segmNotes$'")
+			endif
+			if .taggerNotes$ <> "NA"
+				comment("tagger noted: '.taggerNotes$'")
+			endif
+		.offset_button = endPause: "Quit", "Skip", "Mark offset", 3
+
+		# 3. Jump through the options for choice there. 
+		if .offset_button == 1
+			select all
+			Remove
+			exit
+		elif .offset_button == 2
+			## MEB: I think this won't interact badly with the previous invite to skip, since the user will 
+			## be able to select "Skip" only if she selected "Mark offset" rather than "Skip" previously. 
+			index = index + 1
+		elif .offset_button == 3
+			editor: .stimulusTextGrid$
+				Move cursor to nearest zero crossing
+				.stimOffset = Get cursor
 			endeditor
 
 			selectObject(.stimulusTextGrid$)
 			Insert point: stimulus_textgrid_tiers.splicepoints, '.stimOnset', "stimOnset"
 			Insert boundary: stimulus_textgrid_tiers.filenames, '.stimOnset'
+			Insert point: stimulus_textgrid_tiers.splicepoints, .stimOffset, "stimOffset"
+			Insert boundary: stimulus_textgrid_tiers.filenames, .stimOffset
+			.xmid = (.stimOnset + .stimOffset) / 2
+			current_interval = Get interval at time: stimulus_textgrid_tiers.filenames, .xmid
+			current_transcription$ = replace_regex$(.transcription$, "[$:]", "", 3)
+			current_stimulus_filename$ = .currentParticipantID$ + .trial_number$ + 
+				... .word$ + "_" + current_transcription$ + "4" + .targetC$
+			Set interval text: stimulus_textgrid_tiers.filenames, current_interval, current_stimulus_filename$
 
+			#### Need something a bit more elaborate than this, but this will do for now.
+			beginPause("Finishing up")
+				comment("Insert a note at the stimOnset if you wish to do so.")
+			.notes_button = endPause: "Quit", "No thanks", "Insert", 2
+
+			# Save the textgrid.			
+			@save_stimulus_tiers
+
+			# Take care of the MainDataFrame table, too.
 			selectObject: "Table MainDataFrame"
 			Set numeric value: index, "stimOnset", .stimOnset
-## Don't save here, since want to take care of stimOffset first. 
-# Save as tab-separated file: stimPrepDirectory$ + "/candidateStimuli.txt"		else
-			printline "Was this the problem?"
-		endif
-	endif
-
-### As noted above, this needs to be a procedure, so that we're doing the same thing
-### for both stimOnset and stimOffset, and we're also accommodating to cases where
-### both are already in the candidateStimuli.txt file. 
-# Now for the stimOffset tag.
-	beginPause("Put boundary at stimulus offset for: ")
-			comment("'.currentParticipantID$'  '.trial_number$' : '.word$' : repetition '.repetition' ")
-		comment("tagged as '.consType$' , transcribed as '.transcription$'")
-		if .segmNotes$ <> "NA"
-			comment("segmenter noted: '.segmNotes$'")
-		endif
-		if .taggerNotes$ <> "NA"
-			comment("tagger noted: '.taggerNotes$'")
-		endif
-	.button = endPause: "Quit", "Skip", "Mark offset", 3
-
-	if .button == 1
-		select all
-		Remove
-		exit
-	elif .button == 2
-		index = index + 1
-	elif .button == 3
-		editor: .stimulusTextGrid$
-				Move cursor to nearest zero crossing
-				.stimOffset = Get cursor
-		endeditor
-		selectObject(.stimulusTextGrid$)
-		Insert point: stimulus_textgrid_tiers.splicepoints, .stimOffset, "stimOffset"
-		Insert boundary: stimulus_textgrid_tiers.filenames, .stimOffset
-		.xmid = (.stimOnset + .stimOffset) / 2
-		current_interval = Get interval at time: stimulus_textgrid_tiers.filenames, .xmid
-		current_transcription$ = replace_regex$(.transcription$, "[$:]", "", 3)
-		current_stimulus_filename$ = .currentParticipantID$ + .trial_number$ + 
-			... .word$ + "_" + current_transcription$ + "4" + .targetC$
-		Set interval text: stimulus_textgrid_tiers.filenames, current_interval, current_stimulus_filename$
-
-		#### Need something a bit more elaborate than this, but this will do for now.
-		beginPause("Finishing up")
-			comment("Insert a note at the stimOnset if you wish to do so.")
-		.notes_button = endPause: "Quit", "No thanks", "Insert", 2
-
-		# Save the textgrid.			
-		@save_stimulus_tiers
-
-		# Take care of the MainDataFrame table, too.
-		selectObject: "Table MainDataFrame"
-		Set numeric value: index, "stimOffset", .stimOffset
-		Set string value: index, "checker", checker_initials$
+			Set numeric value: index, "stimOffset", .stimOffset
+			Set string value: index, "checker", checker_initials$
 offending$ = stimPrepDirectory$ + "/candidateStimuli.txt"
-printline 'offending$'
-		Save as tab-separated file: stimPrepDirectory$ + "/candidateStimuli.txt"
-	else
-		printline "Was this the problem?"
-	endif
+#### MEB: For some reason, if I don't have the above, I get an error about expecting the end of a formula after the
+#### next line, so need to look for missing punc. or the like earlier maybe?   For now, though, this works, so ... 
+			Save as tab-separated file: stimPrepDirectory$ + "/candidateStimuli.txt"
+		else
+			printline "No option was successfully selected."
+		endif
+		# 3. End of jump through options for .offset_button.
 
+	endif
+	# 2. End of section to take care of stimOffset tag.
 endwhile
+######  0. End of main loop.
 
 procedure find_current_row: .current_row
 	select Table MainDataFrame
