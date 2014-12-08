@@ -64,8 +64,8 @@ while index < 'last_row_plus_one'
 	if .nextParticipantID$ <> .currentParticipantID$
 		# Setup for and initialization and first run-through of script.
 		if .currentParticipantID$ <> ""
-			removeObject(soundFile$)
-			removeObject(stimulusTextGrid$)
+			removeObject(.soundFile$)
+			removeObject(.stimulusTextGrid$)
 		endif
 		.currentParticipantID$ = .nextParticipantID$
 		@audio: .currentParticipantID$
@@ -117,13 +117,15 @@ while index < 'last_row_plus_one'
 			if .taggerNotes$ <> "NA"
 				comment("tagger noted: '.taggerNotes$'")
 			endif
-		.onset_button = endPause: "Quit", "Skip", "Mark onset", 3
+		.onset_button = endPause: "Quit", "Reject", "Mark onset", 3
 		if .onset_button == 1
+			.status$ = ""
 			select all
 			Remove
 			exit
 		elif .onset_button == 2
 			index = index + 1
+			.status$ = "reject"
 		else
 			editor: .stimulusTextGrid$
 				Move cursor to nearest zero crossing
@@ -145,10 +147,11 @@ while index < 'last_row_plus_one'
 			if .taggerNotes$ <> "NA"
 				comment("tagger noted: '.taggerNotes$'")
 			endif
-		.offset_button = endPause: "Quit", "Skip", "Mark offset", 3
+		.offset_button = endPause: "Quit", "Reject", "Mark offset", 3
 
-		# 3. Jump through the options for choice there. 
+		# 2.1. Jump through the options for choice there. 
 		if .offset_button == 1
+			.status$ = ""
 			select all
 			Remove
 			exit
@@ -156,7 +159,9 @@ while index < 'last_row_plus_one'
 			## MEB: I think this won't interact badly with the previous invite to skip, since the user will 
 			## be able to select "Skip" only if she selected "Mark offset" rather than "Skip" previously. 
 			index = index + 1
+			.status$ = "reject"
 		elif .offset_button == 3
+			.status$ = "accept"
 			editor: .stimulusTextGrid$
 				Move cursor to nearest zero crossing
 				.stimOffset = Get cursor
@@ -182,22 +187,29 @@ while index < 'last_row_plus_one'
 			# Save the textgrid.			
 			@save_stimulus_tiers
 
-			# Take care of the MainDataFrame table, too.
-			selectObject: "Table MainDataFrame"
-			Set numeric value: index, "stimOnset", .stimOnset
-			Set numeric value: index, "stimOffset", .stimOffset
-			Set string value: index, "checker", checker_initials$
-offending$ = stimPrepDirectory$ + "/candidateStimuli.txt"
-#### MEB: For some reason, if I don't have the above, I get an error about expecting the end of a formula after the
-#### next line, so need to look for missing punc. or the like earlier maybe?   For now, though, this works, so ... 
-			Save as tab-separated file: stimPrepDirectory$ + "/candidateStimuli.txt"
 		else
 			printline "No option was successfully selected."
 		endif
-		# 3. End of jump through options for .offset_button.
-
+		# 2.1. End of jump through options for .offset_button.
 	endif
 	# 2. End of section to take care of stimOffset tag.
+
+	# 3. Take care of the MainDataFrame table.
+	if .status$ <> ""
+		selectObject: "Table MainDataFrame"
+		if .status$ == "accept"
+			Set numeric value: index, "stimOnset", .stimOnset
+			Set numeric value: index, "stimOffset", .stimOffset
+		endif
+		Set string value: index, "checker", checker_initials$
+		Set string value: index, "status", .status$
+offending$ = stimPrepDirectory$ + "/candidateStimuli.txt"
+#### MEB: For some reason, if I don't have the above, I get an error about expecting the end of a formula after the
+#### next line, so need to look for missing punc. or the like earlier maybe?   For now, though, this works, so ... 
+		Save as tab-separated file: stimPrepDirectory$ + "/candidateStimuli.txt"
+	endif
+	# 3. End of section to take care of MainDataFrame table.
+
 endwhile
 ######  0. End of main loop.
 

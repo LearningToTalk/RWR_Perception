@@ -32,12 +32,9 @@ procedure audio_directory: .workstation$, .experimental_task$, .testwave$
 		# Mary's set-up, where audio is accessed locally...
 		.directory$ = "/LearningToTalk/Tier2/DataAnalysis"
 	elif .workstation$ == workstations.slot$ [3]
-		# Pat's setup where the audio is accessed through a VPN connection...
-		.directory$ = "/Volumes/tier2/DataAnalysis"
-	elif .workstation$ == workstations.slot$ [4]
 		# Pat's setup where the audio is accessed locally, but the other data are accessed through a VPN connection...
  		.directory$ = "/Volumes/liveoak/LearningToTalk"
-	elif .workstation$ == workstations.slot$ [5]
+	elif .workstation$ == workstations.slot$ [4]
 		# Some previously un-encountered setup...
 		.directory$ = ""
 	endif
