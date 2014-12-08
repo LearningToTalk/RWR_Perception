@@ -167,6 +167,23 @@ while index < 'last_row_plus_one'
 				.stimOffset = Get cursor
 			endeditor
 
+			#### Need something a bit more elaborate than this, but this will do for now.
+			beginPause("Finishing up")
+				comment("Would you like to insert a note?")
+				sentence: "Note", ""
+			.notes_button = endPause: "Quit", "No thanks", "Insert", 2
+			if .notes_button == 1
+				.status$ = ""
+				select all
+				Remove
+				exit				
+			elif .notes_button == 2
+				.note$ = ""
+			elif .notes_button == 3
+				.note$ = note$
+			endif
+
+			# Take care of the TextGrid. 
 			selectObject(.stimulusTextGrid$)
 			Insert point: stimulus_textgrid_tiers.splicepoints, '.stimOnset', "stimOnset"
 			Insert boundary: stimulus_textgrid_tiers.filenames, '.stimOnset'
@@ -178,11 +195,9 @@ while index < 'last_row_plus_one'
 			current_stimulus_filename$ = .currentParticipantID$ + .trial_number$ + 
 				... .word$ + "_" + current_transcription$ + "4" + .targetC$
 			Set interval text: stimulus_textgrid_tiers.filenames, current_interval, current_stimulus_filename$
-
-			#### Need something a bit more elaborate than this, but this will do for now.
-			beginPause("Finishing up")
-				comment("Insert a note at the stimOnset if you wish to do so.")
-			.notes_button = endPause: "Quit", "No thanks", "Insert", 2
+			if .notes_button == 3
+				Insert point: stimulus_textgrid_tiers.checkerNotes, .xmid, .note$
+			endif
 
 			# Save the textgrid.			
 			@save_stimulus_tiers
@@ -200,6 +215,9 @@ while index < 'last_row_plus_one'
 		if .status$ == "accept"
 			Set numeric value: index, "stimOnset", .stimOnset
 			Set numeric value: index, "stimOffset", .stimOffset
+			if .notes_button == 3
+				Set string value: index, "checkerNotes", .note$
+			endif
 		endif
 		Set string value: index, "checker", checker_initials$
 		Set string value: index, "status", .status$
