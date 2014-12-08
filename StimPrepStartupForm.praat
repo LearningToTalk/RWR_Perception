@@ -13,12 +13,11 @@ endif
 procedure workstations
 	# Define vector of workstations.
 	.slot$ [1] = "Default"
-	.slot$ [2] = "Beckman"
-	.slot$ [3] = "Reidy (VPN)"
-	.slot$ [4] = "Reidy (Split)"
-	.slot$ [5] = "Other"
+	.slot$ [2] = "Beckman (Split)"
+	.slot$ [3] = "Reidy (Split)"
+	.slot$ [4] = "Other"
 
-	.length = 5
+	.length = 4
 endproc
 
 procedure experiment_names
@@ -102,13 +101,10 @@ procedure session_parameters
 		# Mary's set-up, where audio is accessed locally...
 		.analysis_directory$ = "/Volumes/tier2/DataAnalysis"
 	elif .workstation$ == workstations.slot$ [3]
-		# Pat's setup where the sharepoint is accessed through a VPN connection...
-		.analysis_directory$ = "/Volumes/tier2/DataAnalysis"
-	elif .workstation$ == workstations.slot$ [4]
 		# Pat's setup where the audio is accessed locally, but the other data
 		# are accessed through a VPN connection...
 		.analysis_directory$ = "/Volumes/tier2/DataAnalysis"
-	elif .workstation$ == workstations.slot$ [5]
+	elif .workstation$ == workstations.slot$ [4]
 		# Some previously un-encountered setup...
 		.analysis_directory$ = ""
 	endif
