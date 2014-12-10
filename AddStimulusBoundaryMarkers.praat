@@ -18,7 +18,7 @@ include StimulusTextGrid.praat
 # Set the session parameters.
 defaultExpName = 1
 defaultActivity = 1
-index = 1
+
 @session_parameters: defaultExpName, defaultActivity
 stimPrepDirectory$ = session_parameters.perception_experiment_directory$ + "/StimPrep"
 checker_initials$ = session_parameters.initials$
@@ -34,7 +34,7 @@ Rename: "MainDataFrame"
 last_row_plus_one = Get number of rows
 last_row_plus_one = 'last_row_plus_one' + 1
 
-# Initialize the index
+# Initialize the index for this session
 index = 1
 
 ## This was deleted from the stimPrepStartupForm.praat directory.  
@@ -124,7 +124,6 @@ while index < 'last_row_plus_one'
 			Remove
 			exit
 		elif .onset_button == 2
-			index = index + 1
 			.status$ = "reject"
 		else
 			editor: .stimulusTextGrid$
@@ -156,9 +155,6 @@ while index < 'last_row_plus_one'
 			Remove
 			exit
 		elif .offset_button == 2
-			## MEB: I think this won't interact badly with the previous invite to skip, since the user will 
-			## be able to select "Skip" only if she selected "Mark offset" rather than "Skip" previously. 
-			index = index + 1
 			.status$ = "reject"
 		elif .offset_button == 3
 			.status$ = "accept"
