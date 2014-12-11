@@ -1,6 +1,7 @@
 # Code dependencies:
-# include session_parameters.praat
-# include L2T-Utilities.praat
+# include StimPrepStartupForm.praat
+## for the session_parameters procedure, etc.
+# include ../L2T-utilities/L2T-Utilities.praat
 
 procedure audio_error: .directory$
                    ... .participant_number$
