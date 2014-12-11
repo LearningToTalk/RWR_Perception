@@ -10,7 +10,7 @@
 ## and possibly adjusting already existing tags, rather than adding a stimOffset tag at the 
 ## end of the word, as in TP2_SibilantGoodness_VAS  and TP2_GenderRating_VAS experiment. 
 
-include ../Utilities/L2T-Utilities.praat
+include ../L2T-utilities/L2T-Utilities.praat
 include StimPrepStartupForm.praat
 include StimPrepAudio.praat
 include StimulusTextGrid.praat
