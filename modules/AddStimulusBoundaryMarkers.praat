@@ -10,19 +10,7 @@
 ## and possibly adjusting already existing tags, rather than adding a stimOffset tag at the 
 ## end of the word, as in TP2_SibilantGoodness_VAS  and TP2_GenderRating_VAS experiment. 
 
-include ../L2T-utilities/L2T-Utilities.praat
-include StimPrepStartupForm.praat
-include StimPrepAudio.praat
-include StimulusTextGrid.praat
-
-# Set the session parameters.
-defaultExpName = 1
-defaultActivity = 1
-
-@session_parameters: defaultExpName, defaultActivity
-stimPrepDirectory$ = session_parameters.perception_experiment_directory$ + "/StimPrep"
-checker_initials$ = session_parameters.initials$
-
+procedure addBoundaries
 # Define the TextGrid tier names and indices.
 @stimulus_textgrid_tiers
 
@@ -226,6 +214,7 @@ offending$ = stimPrepDirectory$ + "/candidateStimuli.txt"
 
 endwhile
 ######  0. End of main loop.
+endproc
 
 procedure find_current_row: .current_row
 	select Table MainDataFrame
